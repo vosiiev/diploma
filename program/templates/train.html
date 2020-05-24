@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{% endblock %}
+
+{% block body %}
+  <br>
+  <main role="main" class="container">
+    <div class="jumbotron text-center mb-4">
+      <h1>Оберіть датасет для тренування</h1>
+      <p class="lead">Різні типи літератури потребують окремого тренування</p>
+      <label for="cars">Оберіть датасет:</label>
+      <select id="cars">
+        <option value="ukr">Українська проза</option>
+      </select>
+      <br><br>
+      <p><button type="button" class="btn btn-primary btn-lg">Тренування</button></p>
+    </div>
+  </main>
+{% endblock %}
