@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css"/>
+<script type="text/javascript" src="static/js/jquery.dataTables.min.js"></script>
+
+<script src="https://use.fontawesome.com/3379bb5894.js"></script>
+<script type="text/javascript">
+    $('#edit_book').on('shown.bs.modal', function() {
+     $('#myInput').focus();
+   });
+  </script>
+
+  <style media="screen">
+    #myInput {
+      background-position: 10px 12px; /* Position the search icon */
+      background-repeat: no-repeat; /* Do not repeat the icon image */
+      width: 100%; /* Full-width */
+      font-size: 16px; /* Increase font-size */
+      padding: 12px 20px 12px 40px; /* Add some padding */
+      border: 1px solid #ddd; /* Add a grey border */
+      margin-bottom: 12px; /* Add some space below the input */
+    }
+  </style>
+<script type="text/javascript">
+  $(document).ready( function () {
+    $('#customers').DataTable();
+  } );
+</script>
+
+{% endblock %}
+
+{% block body %}
+<div class="card">
+  <h3 class="card-header text-center font-weight-bold text-uppercase py-4">Історія класифікацій</h3>
+  <div class="card-body">
+    <div id="table" class="table-editable">
+      <table id="customers" class="table table-bordered table-responsive-md table-striped table-sm text-center">
+        <caption>
+          <div class="p-3">
+          </div>
+        </caption>
+        <thead>
+          {% if current_user.is_authenticated %}
+          <tr>
+            <th onclick="sortTable(0)" class="text-center align-top">№</th>
+            <th onclick="sortTable(1)" class="text-center align-top">Автор</th>
+            <th onclick="sortTable(2)" class="text-center align-top">Назва</th>
+            <th onclick="sortTable(3)" class="text-center align-top">Герой</th>
+            <th onclick="sortTable(4)" class="text-center align-top">Архетип</th> 
+            <th onclick="sortTable(5)" class="text-center align-top">Точність</th>
+            <th onclick="sortTable(5)" class="text-center align-top"></th>
+
+          </tr>
+        </thead>
+        <tbody>
+          {% for person in persons %}
+            <tr>
+              <td class="pt-3-half">{{person.id}}</td>
+              <td class="pt-3-half">{{person.book.author}}</td>
+              <td class="pt-3-half">{{person.book.name}}</td>
+              <td class="pt-3-half">{{person.name}}</td>
+              <td class="pt-3-half">{{person.archetype.name}}</td>
+              <td class="pt-3-half">{{person.prec}}%</td>
+              <td class="pt-3-half">
+                <a class="btn btn-primary btn-sm" data-toggle="modal" data-target="#edit_{{person.book.id}}">
+                  <i class="fa fa-pencil"></i>
+                </a>
+                <a class="btn btn-danger btn-sm"  href="/person/delete/{{person.id}}">
+                  <i class="fa fa-trash-o"></i>
+                </a>
+            </td>
+            <div id="edit_{{person.book.id}}" class="modal" tabindex="-1" role="dialog" >
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Змінити запис у таблиці</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    <form method="POST" action="/book/edit/{{person.book.id}}" novalidate>
+                      <p>
+                        <div>
+                          <label for="content">Автор</label>
+                          <input class="form-control"  type="text" name="author" id="author" value="{{person.book.author}}" required>
+                        </div>
+                      </p>
+                      <p>
+                        <div>
+                          <label for="content">Назва</label>
+                          <input class="form-control"  type="text" name="bname" id="bname" value="{{person.book.name}}" required>
+                        </div>
+                      </p>
+                        <div class="modal-footer">
+                        <input type="submit" class="btn btn-primary" value="Зберегти"></input>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрити</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+            </tr>
+          {% endfor %}
+          {% else %}
+          <tr>
+            <th onclick="sortTable(0)" class="text-center align-top">№</th>
+            <th onclick="sortTable(1)" class="text-center align-top">Автор</th>
+            <th onclick="sortTable(2)" class="text-center align-top">Назва</th>
+            <th onclick="sortTable(3)" class="text-center align-top">Герой</th>
+            <th onclick="sortTable(4)" class="text-center align-top">Архетип</th>
+            <th onclick="sortTable(5)" class="text-center align-top">Точність</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for person in persons %}
+            <tr>
+              <td class="pt-3-half">{{person.id}}</td>
+              <td class="pt-3-half">{{person.book.author}}</td>
+              <td class="pt-3-half">{{person.book.name}}</td>
+              <td class="pt-3-half">{{person.name}}</td>
+              <td class="pt-3-half">{{person.archetype.name}}</td>
+              <td class="pt-3-half">{{person.prec}}%</td>
+            </tr>
+
+          {% endfor %}
+
+
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
