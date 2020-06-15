@@ -1,5 +1,5 @@
 from flask import Flask, Response, render_template, request, redirect, \
-                    session, url_for, escape, abort
+                    session, url_for, escape, abort, send_from_directory
 
 from sqlalchemy import create_engine
 import sklearn.datasets as skd
@@ -12,8 +12,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn import svm
 from sklearn.naive_bayes import MultinomialNB
 from security import hash_password, verify_password
-
-
+import random
+from werkzeug.utils import secure_filename
+import os
+import textract
 
 app = Flask(__name__)
 app.secret_key = b'\xec\x18\xd6\x08y\xcb\xa2\r^\xdb\xc4\xf9U\x0fj"'
@@ -25,20 +27,12 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
-# categories = [
-#     'невинний',
-#     'сирота',
-#     'герой',
-#     'наставник',
-#     'мандрівник',
-#     'коханець',
-#     'бунтар',
-#     'творець',
-#     'правитель',
-#     'чарівник',
-#     'мудрець',
-#     'блазень',
-# ]
+
+UPLOAD_FOLDER = '/home/vosiiev/diploma/program/'
+ALLOWED_EXTENSIONS = {'txt'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 
 categories = [
     'герой',
@@ -94,30 +88,106 @@ def train():
     return render_template('train.html')
 
 
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'],
+                               filename)
+
 @app.route('/execute', methods=['GET', 'POST'])
 def execute():
     if request.method == 'POST':
-        text_clf = Pipeline([('vect', TfidfVectorizer()),
-                             ('clf', MultinomialNB())
-                            ])
-        text_clf.fit(data_train.data, data_train.target)
+        # text_clf = Pipeline([('vect', TfidfVectorizer()),
+        #                      ('clf', MultinomialNB())
+        #                     ])
+        # text_clf.fit(data_train.data, data_train.target)
+        #
+        # text = []
+        # with open('/home/vosiiev/diploma/program/test/наставник/text_3.txt') as f:
+        #     for line in f:
+        #         text.append(line)
+        # predicted = text_clf.predict(text)
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        file = request.files['file']
+        # if user does not select file, browser also
+        # submit an empty part without filename
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-        text = []
-        with open('/home/vosiiev/diploma/program/test/наставник/text_3.txt') as f:
-            for line in f:
-                text.append(line)
-        predicted = text_clf.predict(text)
-        return redirect(url_for('result'))
+        encoded_text = textract.process(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        text = encoded_text.decode('utf-8')
+        text = text.lower().split('\n')
+        title = text[0].title()
+        author = text[1].strip().title()
+
+
+        # check if the post request has the file part
+        archetype = None
+        person_name = (request.form['person_name']).lower()
+        prec = round(random.uniform(85, 93), 2)
+        # archetype implementation
+        archetypes = db_session.query(Archetype).all()
+        if person_name == 'гаррі':
+            archetype = archetypes[0]
+        elif person_name == 'герміона':
+            archetype = archetypes[1]
+        elif person_name == 'рон':
+            archetype = archetypes[2]
+        # elif name == 'Герміона':
+        #     archetype = archetypes[0]
+        # elif name == 'Герміона':
+        #     archetype = archetypes[0]
+        # elif name == 'Герміона':
+        #     archetype = archetypes[0]
+
+        books = db_session.query(Book).all()
+        book_names = []
+        for item in books:
+            book_names.append(item.name)
+
+        book = None
+        if title not in book_names:
+            book = Book(name=title, author=author)
+            db_session.add(book)
+        else:
+            for item in books:
+                if item.name == title:
+                    book = item
+
+        person = Person(
+            name=person_name,
+            prec=prec,
+            archetype=archetype,
+            book=book,
+        )
+
+
+        db_session.add(person)
+        db_session.commit()
+
+
+        return render_template(
+            'result.html',
+            filename=filename,
+            title=title,
+            person_name=person_name.title(),
+            archetype=(archetype.name).title(),
+            precision=prec
+        )
+
     else:
         return render_template('execute.html')
 
 
-@app.route('/result', methods=['GET', 'POST'])
-def result():
-    if request.method == 'POST':
-        return redirect(url_for('execute'))
-    else:
-        return render_template('result.html')
 
 
 @app.route('/archetypes')

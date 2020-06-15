@@ -16,7 +16,7 @@ class Archetype(Base):
 class Book(Base):
     __tablename__ = 'book'
     id = Column(Integer, primary_key=True)
-    name = Column(String(32))
+    name = Column(String(128))
     author = Column(String(32))
     person = relationship('Person', backref='book')
 

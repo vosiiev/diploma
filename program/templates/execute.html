@@ -17,13 +17,13 @@
   <div class="jumbotron text-center mb-4">
     <h1>Завантажте файл для класифікації</h1>
     <p class="lead">Оберіть *.txt файл з текстом українською мовою та введіть ім'я персонажа</p>
-    <form action="/result" method="POST"
+    <form action="/execute" method="POST"
          enctype="multipart/form-data">
          <input type = "file" name = "file" />
          <div class="form-group">
            <br>
-          <p><label for="exampleInputPassword1">Ім'я</label>
-          <input  id="exampleInputPassword1" placeholder=""></p>
+          <p><label for="person_name">Ім'я</label>
+          <input  id="person_name" name="person_name" placeholder=""></p>
         </div>
 <br><br>
          <p><input type="submit" class="btn btn-primary btn-lg" value="Визначити"/></p>
